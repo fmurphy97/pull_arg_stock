@@ -26,3 +26,9 @@ class Titles:
             f'{URL_API}/{market}/Titulos/{symbol}/Cotizacion/seriehistorica/{date_from}/{date_to}/ajustada',
             headers=headers)
         return response.json()
+
+
+if __name__ == "__main__":
+    from controllers.token import Token
+    tkn = Token()
+    titles_collector = Titles(tkn)
