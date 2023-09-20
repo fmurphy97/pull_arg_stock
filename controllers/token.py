@@ -4,7 +4,7 @@ import pytz
 
 from utils.private_constants import USERNAME, PASSWORD
 from utils.constants import URL_TOKEN, GRANT_TYPE
-
+from utils.date_parser import str_to_date
 
 
 
@@ -20,7 +20,7 @@ class Token:
 
         self.new_access_token()
 
-    def access_token(self):
+    def get_token(self):
         now = datetime.datetime.now(pytz.UTC)
 
         if now >= self.expiry_date:
@@ -53,8 +53,8 @@ class Token:
         self._access_token = response_json['access_token']
         self.token_type = response_json['token_type']
         self.refresh_token = response_json['refresh_token']
-        self.expiry_date = response_json['.expires']
-        self.refresh_expiry_date = response_json['.refreshexpires']
+        self.expiry_date = str_to_date(response_json['.expires'])
+        self.refresh_expiry_date = str_to_date(response_json['.refreshexpires'])
 
     def refresh_token(self):
         # set new access token and refresh token using the refresh token
