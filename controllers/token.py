@@ -7,7 +7,6 @@ from utils.constants import URL_TOKEN, GRANT_TYPE
 from utils.date_parser import str_to_date
 
 
-
 class Token:
 
     def __init__(self):
