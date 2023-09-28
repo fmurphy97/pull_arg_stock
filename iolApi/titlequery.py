@@ -1,7 +1,7 @@
 import requests
 
-from iol_api.token import Token
-from iolApi.constants import URL_API, MARKETS, PERIODS, INSTRUMENT_TYPES, COUNTRIES
+from iolApi.token import Token
+from iolApi.constants import URL_API, MARKETS, PERIODS, INSTRUMENT_TYPES, COUNTRIES, INSTRUMENT_TYPES_FOR_PANEL
 
 
 class TitleQuery:
@@ -19,6 +19,18 @@ class TitleQuery:
         headers = {'Authorization': f'Bearer {api_key}'}
         response = requests.get(
             f'{URL_API}/Cotizaciones/{instrument_type}/{country}/Todos?',
+            headers=headers)
+        return response.json()
+
+    def get_panel_data(self, instrument_type, panel, country):
+        if instrument_type not in INSTRUMENT_TYPES_FOR_PANEL:
+            return f"The instrument type {instrument_type} is not in {INSTRUMENT_TYPES_FOR_PANEL}"
+        if country not in COUNTRIES:
+            return f"The country {country} is not in {COUNTRIES}"
+        api_key = self.token.get_token()
+        headers = {'Authorization': f'Bearer {api_key}'}
+        response = requests.get(
+            f'{URL_API}/Cotizaciones/{instrument_type}/{panel}/{country}',
             headers=headers)
         return response.json()
 
