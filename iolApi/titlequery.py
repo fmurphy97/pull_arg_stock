@@ -1,7 +1,7 @@
 import requests
 
-from controllers.token import Token
-from utils.constants import URL_API, MARKETS, PERIODS, INSTRUMENT_TYPES, COUNTRIES
+from iol_api.token import Token
+from iolApi.constants import URL_API, MARKETS, PERIODS, INSTRUMENT_TYPES, COUNTRIES
 
 
 class TitleQuery:

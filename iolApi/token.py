@@ -2,9 +2,9 @@ import requests
 import datetime
 import pytz
 
-from utils.private_constants import USERNAME, PASSWORD
-from utils.constants import URL_TOKEN, GRANT_TYPE
-from utils.date_parser import str_to_date
+from iolApi.private_constants import USERNAME, PASSWORD
+from iolApi.constants import URL_TOKEN, GRANT_TYPE
+from iolApi.date_parser import str_to_date
 
 
 class Token:

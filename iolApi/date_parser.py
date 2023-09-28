@@ -1,7 +1,7 @@
 import datetime
 import pytz
 
-from utils.private_constants import TIMEZONE
+from iolApi.private_constants import TIMEZONE
 
 
 def str_to_date(date_str):
