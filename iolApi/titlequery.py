@@ -10,10 +10,8 @@ class TitleQuery:
         self.token = token
 
     def get_instrument_data(self, instrument_type, country):
-        if instrument_type not in INSTRUMENT_TYPES:
-            return f"The instrument type {instrument_type} is not in {INSTRUMENT_TYPES}"
-        if country not in COUNTRIES:
-            return f"The country {country} is not in {COUNTRIES}"
+        assert instrument_type in INSTRUMENT_TYPES, f"The instrument type {instrument_type} is not in {INSTRUMENT_TYPES}"
+        assert country in COUNTRIES, f"The country {country} is not in {COUNTRIES}"
 
         api_key = self.token.get_token()
         headers = {'Authorization': f'Bearer {api_key}'}
@@ -23,10 +21,8 @@ class TitleQuery:
         return response.json()
 
     def get_panel_data(self, instrument_type, panel, country):
-        if instrument_type not in INSTRUMENT_TYPES_FOR_PANEL:
-            return f"The instrument type {instrument_type} is not in {INSTRUMENT_TYPES_FOR_PANEL}"
-        if country not in COUNTRIES:
-            return f"The country {country} is not in {COUNTRIES}"
+        assert instrument_type in INSTRUMENT_TYPES_FOR_PANEL, f"The instrument type {instrument_type} is not in {INSTRUMENT_TYPES_FOR_PANEL}"
+        assert country in COUNTRIES, f"The country {country} is not in {COUNTRIES}"
         api_key = self.token.get_token()
         headers = {'Authorization': f'Bearer {api_key}'}
         response = requests.get(
@@ -48,8 +44,7 @@ class TitleQuery:
         return response.json()
 
     def get_historical_series(self, market, symbol, date_from, date_to):
-        if market not in MARKETS:
-            return f"The market {market} is not in {MARKETS}"
+        assert market in MARKETS, f"The market {market} is not in {MARKETS}"
 
         headers = {'Authorization': f'Bearer {self.token.get_token()}'}
         response = requests.get(
