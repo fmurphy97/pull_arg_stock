@@ -67,7 +67,7 @@ def split_into_countries(df, species_data):
     df_ext_usd = df[
         (~df['symbol'].isna())
         & (df['symbol'].isin(species_data['symbol']))
-    ]
+        ]
 
     # Merge df in pesos and dollars
     df_usd = pd.merge(df_ext_usd, df_local_usd, on="base_symbol", how='outer', suffixes=('', '_D_BA'))
@@ -77,18 +77,12 @@ def split_into_countries(df, species_data):
 
 
 if __name__ == "__main__":
-    # Get the data in a df
-    filepath = "data/outputs/species_data.csv"
-
     cedear_data = pd.read_csv("data/inputs/cedear_ratios.csv")
     queried_df = query_symbol_data_yf(cedear_data)
-    queried_df.to_csv(filepath)
 
     df_full = split_into_countries(df=queried_df, species_data=cedear_data)
     df_full = calculate_mep(df=df_full)
     df_full = adjust_prices(df=df_full, species_data=cedear_data)
-
-    df_full.to_csv("data/outputs/df_full.csv")
 
     # Display the df with the selected columns
     cols = ["base_symbol", "shortName", "open_BA", "bid_BA", "ask_BA", "open_D_BA", "bid_D_BA", "ask_D_BA", "volume_BA",
