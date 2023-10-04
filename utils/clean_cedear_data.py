@@ -8,14 +8,16 @@ def query_symbol_data_yf(species_data):
     missing_symbols = []
     data = {}
 
-    input_species_data = species_data[species_data["include"]].to_dict(orient="records")
+    # input_species_data = species_data[species_data["include"]].to_dict(orient="records")
+    input_species_data = species_data.to_dict(orient="records")
+
 
     for symbol_info in tqdm(input_species_data):
         base_symbol = symbol_info["symbol"]
         for symbol_type in ['symbol', 'symbol_arg', 'symbol_arg_usd']:
-            current_symbol = symbol_info[symbol_type]
-            yf_ticker = yf.Ticker(current_symbol)
+            current_symbol = str(symbol_info[symbol_type])
             try:
+                yf_ticker = yf.Ticker(current_symbol)
                 retrieved_ticker_info = yf_ticker.info
                 retrieved_ticker_info["base_symbol"] = base_symbol
 
@@ -45,11 +47,11 @@ def adjust_prices(df, species_data, metric="open"):
     df_w_ratio = pd.merge(df, ratios_df, left_on="base_symbol", right_on="symbol", how="left", suffixes=('', '_y'))
 
     ccl = df_w_ratio["MEP"][df_w_ratio["base_symbol"] == "AAPL"]
-    df_w_ratio["price_D_BA_adj"] = df_w_ratio[f"{metric}_D_BA"] * df_w_ratio["ratio"]
-    df_w_ratio["price_BA_adj"] = df_w_ratio[f"{metric}_BA"] * df_w_ratio["ratio"] / ccl
+    df_w_ratio[f"{metric}_D_BA_adj"] = df_w_ratio[f"{metric}_D_BA"] * df_w_ratio["ratio"]
+    df_w_ratio[f"{metric}_BA_adj"] = df_w_ratio[f"{metric}_BA"] * df_w_ratio["ratio"] / ccl
 
-    df_w_ratio["ganDols"] = (df_w_ratio[metric] - df_w_ratio["price_D_BA_adj"]) / df_w_ratio[metric]
-    df_w_ratio["ganPesos"] = (df_w_ratio[metric] - df_w_ratio["price_BA_adj"]) / df_w_ratio[metric]
+    df_w_ratio["ganDols"] = (df_w_ratio[metric] - df_w_ratio[f"{metric}_D_BA_adj"]) / df_w_ratio[metric]
+    df_w_ratio["ganPesos"] = (df_w_ratio[metric] - df_w_ratio[f"{metric}_BA_adj"]) / df_w_ratio[metric]
 
     return df_w_ratio
 
