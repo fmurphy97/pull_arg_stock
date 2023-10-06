@@ -82,6 +82,6 @@ if __name__ == "__main__":
             "volume_D_BA", "MEP", "MEP_compra_ARS", "MEP_compra_USD", "ganDols", "ganPesos"]
     df_with_adj_prices[cols].to_csv("../data/outputs/df_mep.csv", index=False)
 
-    # cols = ["base_symbol", "shortName", "open", "price_D_BA_adj", "price_BA_adj", "volume_BA", "volume_D_BA",
-    # "ganDols", "ganPesos"]
-    # df_full[cols].to_csv("data/outputs/asset_here_vs_local_with_ratio.csv", index=False)
+    cols = ["base_symbol", "shortName", "open", "open_D_BA_adj", "open_BA_adj", "volume_BA", "volume_D_BA",
+    "ganDols", "ganPesos"]
+    df_with_adj_prices[cols].to_csv("../data/outputs/asset_here_vs_local_with_ratio.csv", index=False)
