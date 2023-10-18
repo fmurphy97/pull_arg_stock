@@ -4,8 +4,8 @@ import pandas as pd
 def calculate_mep(df):
     """Calculate ratio between outside price vs local"""
     df.loc[:, 'MEP'] = df['open_BA'] / df['open_D_BA']
-    df.loc[:, "MEP_compra_ARS"] = df["ask_BA"] / df["bid_D_BA"]
-    df.loc[:, "MEP_compra_USD"] = df["bid_BA"] / df["ask_D_BA"]
+    df.loc[:, "USD/ARS ask"] = df["ask_BA"] / df["bid_D_BA"]
+    df.loc[:, "USD/ARS bid"] = df["bid_BA"] / df["ask_D_BA"]
 
     return df
 

@@ -52,5 +52,5 @@ df3 = calculate_mep(df2)
 
 cols = ["base_symbol", "shortName_D_BA", "open_BA", "bid_BA", "ask_BA", "open_D_BA", "bid_D_BA", "ask_D_BA",
         "volume_BA",
-        "volume_D_BA", "MEP", "MEP_compra_ARS", "MEP_compra_USD"]
+        "volume_D_BA", "MEP", "USD/ARS ask", "USD/ARS bid"]
 df3[cols].rename(columns={"shortName_D_BA": "shortName"}).to_csv("data/outputs/df_mep.csv", index=False)

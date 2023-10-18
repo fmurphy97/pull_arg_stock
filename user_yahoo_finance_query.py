@@ -36,8 +36,8 @@ if __name__ == "__main__":
     df_with_adj_prices = adjust_prices(df=df_with_mep_values, species_data=cedear_data)
 
     # Display the df with the selected columns
-    cols = ["base_symbol", "shortName", "open_BA", "bid_BA", "ask_BA", "open_D_BA", "bid_D_BA", "ask_D_BA", "volume_BA",
-            "volume_D_BA", "MEP", "MEP_compra_ARS", "MEP_compra_USD", "ganDols", "ganPesos"]
+    cols = ["base_symbol", "shortName", "open_BA", "ask_BA", "bid_BA", "open_D_BA", "bid_D_BA", "ask_D_BA", "volume_BA",
+            "volume_D_BA", "MEP", "USD/ARS ask", "USD/ARS bid", "ganDols", "ganPesos"]
     df_with_adj_prices[cols].to_csv("data/outputs/df_mep.csv", index=False)
 
     cols = ["base_symbol", "shortName", "open", "open_D_BA_adj", "open_BA_adj", "volume_BA", "volume_D_BA",
