@@ -44,47 +44,57 @@ symbol_data = get_stock_info("SPY")
 df1, df2, df3 = query_historical_data(stock_data=symbol_data, period="1y", interval="1d")
 
 
-# Create the Plotly figure
-fig = go.Figure()
+def area_plot(dfs_by_symbol):
+    colors = [(44, 160, 44), (31, 119, 180), (255, 127, 14)]
+    fig = go.Figure()
+    for i, (asset_symbol, df) in enumerate(dfs_by_symbol.items()):
+        c = colors[i]
+        # Add the price line
+        fig.add_trace(go.Scatter(x=df.index, y=df['Close'], mode='lines', name=asset_symbol, line_color=f'rgb{c}',
+                                 hovertemplate='%{y:.2f}'))
 
-for df_i, asset_symbol, c in [(df1, symbol_data.base_symbol, (44, 160, 44)),
-                              (df2, symbol_data.symbol_arg_usd, (31, 119, 180)),
-                              (df3, symbol_data.symbol_arg, (255, 127, 14))
-                              ]:
-    # Add the price line
-    fig.add_trace(go.Scatter(x=df_i.index, y=df_i['Close'], mode='lines', name=asset_symbol, line_color=f'rgb{c}'))
+        # Add the high-low area
+        fig.add_trace(
+            go.Scatter(x=df.index, y=df['Low'], mode='lines', name='low', hoverinfo='skip', showlegend=False,
+                       line_color=f'rgba({c[0]},{c[1]},{c[2]},0)'))
 
-    # Add the high-low area
-    fig.add_trace(go.Scatter(x=df_i.index, y=df_i['Low'], mode='lines', name='low', hoverinfo='skip', showlegend=False,
-                             line_color=f'rgba({c[0]},{c[1]},{c[2]},0)'))
+        fig.add_trace(go.Scatter(x=df.index, y=df['High'], mode='none', fill='tonexty',
+                                 fillcolor=f'rgba({c[0]},{c[1]},{c[2]},0.2)',
+                                 name='High-Low', hoverinfo='skip', showlegend=False))
+        # Set the layout
+    fig.update_layout(title='Asset Price', xaxis=dict(title='Date'), yaxis=dict(title='Price'), showlegend=True,
+                      hovermode="x unified")
 
-    fig.add_trace(go.Scatter(x=df_i.index, y=df_i['High'], mode='none', fill='tonexty',
-                             fillcolor=f'rgba({c[0]},{c[1]},{c[2]},0.2)',
-                             name='High-Low', hoverinfo='skip', showlegend=False))
-# Set the layout
-fig.update_layout(title='Asset Price', xaxis=dict(title='Date'), yaxis=dict(title='Price'), showlegend=True)
+    return fig
 
-# Display the plot using Streamlit
-st.plotly_chart(fig)
 
-# Create the Plotly figure
-fig = go.Figure()
-for df_i, asset_symbol, c in [(df1, symbol_data.base_symbol, (44, 160, 44)),
-                              (df2, symbol_data.symbol_arg_usd, (31, 119, 180)),
-                              (df3, symbol_data.symbol_arg, (255, 127, 14))
-                              ]:
-    fig.add_trace(
-        go.Candlestick(x=df_i.index, open=df_i.Open, high=df_i.High, low=df_i.Low, close=df_i.Close, name=asset_symbol,
-                       increasing=dict(line=dict(color=f'rgb({c[0]},{c[1]},{c[2] + 30})')),
-                       decreasing=dict(line=dict(color='red')),
-                       ))
+def candle_plot(dfs_by_symbol):
+    colors = [(44, 160, 44), (31, 119, 180), (255, 127, 14)]
+    fig = go.Figure()
+    for i, (asset_symbol, df) in enumerate(dfs_by_symbol.items()):
+        c = colors[i]
+        fig.add_trace(
+            go.Candlestick(x=df.index, open=df.Open, high=df.High, low=df.Low, close=df.Close, name=asset_symbol,
+                           increasing=dict(line=dict(color=f'rgb{c}')),
+                           decreasing=dict(line=dict(color='red')),
+                           ))
+        # Set the layout
+    fig.update_layout(title='Asset Price', xaxis=dict(title='Date'), yaxis=dict(title='Price'), showlegend=True,
+                      hovermode="x unified")
 
-# Set the layout
-fig.update_layout(title='Asset Price', xaxis=dict(title='Date'), yaxis=dict(title='Price'), showlegend=True)
+    return fig
 
-# Display the plot using Streamlit
-st.plotly_chart(fig)
 
+asset_data_by_symbol = {
+    symbol_data.base_symbol: df1,
+    symbol_data.symbol_arg_usd: df2,
+    symbol_data.symbol_arg: df3
+}
+fig_area_plot = area_plot(asset_data_by_symbol)
+st.plotly_chart(fig_area_plot)
+
+fig_candle_plot = candle_plot(asset_data_by_symbol)
+st.plotly_chart(fig_candle_plot)
 
 # # df4 = (df2["Adj Close"] / df1["Adj Close"] - 1)
 # # plt.plot(df3.index, df4, label="Stock 2")
