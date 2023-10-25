@@ -40,10 +40,6 @@ def adjust_local_price(df: pd.DataFrame):
     return df
 
 
-symbol_data = get_stock_info("SPY")
-df1, df2, df3 = query_historical_data(stock_data=symbol_data, period="1y", interval="1d")
-
-
 def area_plot(dfs_by_symbol):
     colors = [(44, 160, 44), (31, 119, 180), (255, 127, 14)]
     fig = go.Figure()
@@ -73,10 +69,11 @@ def candle_plot(dfs_by_symbol):
     fig = go.Figure()
     for i, (asset_symbol, df) in enumerate(dfs_by_symbol.items()):
         c = colors[i]
+        new_c = tuple(int(v * 0.6) for v in c)
         fig.add_trace(
             go.Candlestick(x=df.index, open=df.Open, high=df.High, low=df.Low, close=df.Close, name=asset_symbol,
                            increasing=dict(line=dict(color=f'rgb{c}')),
-                           decreasing=dict(line=dict(color='red')),
+                           decreasing=dict(line=dict(color=f'rgb{new_c}')),
                            ))
         # Set the layout
     fig.update_layout(title='Asset Price', xaxis=dict(title='Date'), yaxis=dict(title='Price'), showlegend=True,
@@ -85,11 +82,16 @@ def candle_plot(dfs_by_symbol):
     return fig
 
 
+symbol_usa = st.text_input("Select a symbol", value="SPY")
+symbol_data = get_stock_info(symbol_usa)
+df1, df2, df3 = query_historical_data(stock_data=symbol_data, period="1y", interval="1d")
+
 asset_data_by_symbol = {
     symbol_data.base_symbol: df1,
     symbol_data.symbol_arg_usd: df2,
     symbol_data.symbol_arg: df3
 }
+
 fig_area_plot = area_plot(asset_data_by_symbol)
 st.plotly_chart(fig_area_plot)
 
