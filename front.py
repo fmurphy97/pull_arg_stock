@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 from use_iol_query import update_iol_data
+from user_yahoo_finance_query import update_yahoo_data
+import datetime as dt
 
 # st.set_page_config(layout="wide")
 
@@ -9,7 +11,7 @@ if st.button("Refresh/Pull Data"):
     if data_source == "IOL":
         update_iol_data()
     else:
-        pass
+        update_yahoo_data()
 
 min_vol_usd = st.number_input("Min Volume USD", step=1250, value=5 * 10 ** 3)
 # max_spread = cols[1].number_input("Max Spread", step=0.1, value=0.5)

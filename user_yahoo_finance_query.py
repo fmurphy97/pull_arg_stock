@@ -27,7 +27,7 @@ def query_symbol_data_yf(species_data):
     return pd.DataFrame.from_dict(data, orient="index")
 
 
-if __name__ == "__main__":
+def update_yahoo_data():
     cedear_data = pd.read_csv("data/inputs/cedear_ratios.csv")
     queried_df = query_symbol_data_yf(cedear_data)
 
@@ -35,11 +35,7 @@ if __name__ == "__main__":
     df_with_mep_values = calculate_mep(df=df_merged_by_country)
     df_with_adj_prices = adjust_prices(df=df_with_mep_values, species_data=cedear_data)
 
-    # Display the df with the selected columns
     cols = ["base_symbol", "shortName", "open_BA", "ask_BA", "bid_BA", "open_D_BA", "bid_D_BA", "ask_D_BA", "volume_BA",
             "volume_D_BA", "MEP", "USD/ARS ask", "USD/ARS bid", "ganDols", "ganPesos"]
     df_with_adj_prices[cols].to_csv("data/outputs/df_mep.csv", index=False)
 
-    cols = ["base_symbol", "shortName", "open", "open_D_BA_adj", "open_BA_adj", "volume_BA", "volume_D_BA",
-            "ganDols", "ganPesos"]
-    df_with_adj_prices[cols].to_csv("data/outputs/asset_here_vs_local_with_ratio.csv", index=False)
