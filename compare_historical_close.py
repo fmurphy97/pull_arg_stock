@@ -58,8 +58,8 @@ def area_plot(dfs_by_symbol):
                                  fillcolor=f'rgba({c[0]},{c[1]},{c[2]},0.2)',
                                  name='High-Low', hoverinfo='skip', showlegend=False))
         # Set the layout
-    fig.update_layout(title='Asset Price', xaxis=dict(title='Date'), yaxis=dict(title='Price'), showlegend=True,
-                      hovermode="x unified")
+    fig.update_layout(title='', xaxis=dict(title='Date'), yaxis=dict(title='Price'), showlegend=True,
+                      hovermode="x unified", width=900, height=600)
 
     return fig
 
@@ -71,20 +71,24 @@ def candle_plot(dfs_by_symbol):
         c = colors[i]
         new_c = tuple(int(v * 0.6) for v in c)
         fig.add_trace(
-            go.Candlestick(x=df.index, open=df.Open, high=df.High, low=df.Low, close=df.Close, name=asset_symbol,
+            go.Candlestick(x=df.index, open=df.Open, high=df.High, low=df.Low, close=df["Adj Close"], name=asset_symbol,
                            increasing=dict(line=dict(color=f'rgb{c}')),
                            decreasing=dict(line=dict(color=f'rgb{new_c}')),
                            ))
         # Set the layout
-    fig.update_layout(title='Asset Price', xaxis=dict(title='Date'), yaxis=dict(title='Price'), showlegend=True,
-                      hovermode="x unified")
+    fig.update_layout(title='', xaxis=dict(title='Date'), yaxis=dict(title='Price'), showlegend=True,
+                      hovermode="x unified", width=900, height=600)
 
     return fig
 
 
-symbol_usa = st.text_input("Select a symbol", value="SPY")
+symbol_usa = st.text_input("Select a symbol", value="SPY").upper()
 symbol_data = get_stock_info(symbol_usa)
 df1, df2, df3 = query_historical_data(stock_data=symbol_data, period="1y", interval="1d")
+
+df1 = df1.round(2)
+df2 = df2.round(2)
+df3 = df3.round(2)
 
 asset_data_by_symbol = {
     symbol_data.base_symbol: df1,
