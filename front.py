@@ -56,6 +56,14 @@ for col_name in ["USD/ARS bid", "USD/ARS ask"]:
     ccl = df_with_adj_prices["aux"].sum() / df_with_adj_prices['volume_total'].sum()
     ccl_puntas.append(ccl)
 
+new_ccl = sum(ccl_puntas) / 2
+ccl_path = "data/inputs/dolar_ccl_historic.csv"
+ccl_data = pd.read_csv(ccl_path, index_col="Fecha")
+today_date = dt.date.today().strftime("%m/%d/%Y")
+ccl_data.loc[today_date, :] = new_ccl
+ccl_data.to_csv(ccl_path)
+
+
 cols = st.columns(2)
 cols[0].metric(label="CCL Avg Compra", value="$ {:.1f}".format(round(ccl_puntas[0], 1)))
 cols[1].metric(label="CCL Avg Venta", value="$ {:.1f}".format(round(ccl_puntas[1], 1)))
