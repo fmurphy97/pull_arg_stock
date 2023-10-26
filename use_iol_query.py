@@ -42,25 +42,24 @@ def format_output_df(df):
     return df
 
 
-def join_local_vs_foreign_asset(df):
-    asset_ratios = pd.read_csv("data/inputs/cedear_ratios.csv")
-
+def join_local_vs_foreign_asset(df, asset_data):
     my_dict = {}
-    for _, row in asset_ratios.iterrows():
+    for _, row in asset_data.iterrows():
         my_dict[row['symbol_arg']] = row['symbol']
         my_dict[row['symbol_arg_usd']] = row['symbol']
 
     df['base_symbol'] = df['symbol'].map(my_dict)
-    df2 = split_into_countries(df, asset_ratios)
+    df2 = split_into_countries(df, asset_data)
     df3 = calculate_mep(df2)
 
     return df3
 
 
 def update_iol_data():
+    asset_ratios = pd.read_csv("data/inputs/cedear_ratios.csv")
     queried_df = query_data()
     queried_df_formatted = format_output_df(queried_df)
-    final_queried_df = join_local_vs_foreign_asset(queried_df_formatted)
+    final_queried_df = join_local_vs_foreign_asset(df=queried_df_formatted, asset_data=asset_ratios)
 
     cols = ["base_symbol", "shortName_D_BA", "open_BA", "bid_BA", "ask_BA", "open_D_BA", "bid_D_BA", "ask_D_BA",
             "volume_BA", "volume_D_BA", "MEP", "USD/ARS ask", "USD/ARS bid"]
