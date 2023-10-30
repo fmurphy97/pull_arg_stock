@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 
 
 def get_stock_info(symbol: str):
-    stock_data = pd.read_csv("data/inputs/cedear_ratios.csv", index_col="symbol").loc[symbol, :]
+    stock_data = pd.read_csv("data/cedear_ratios.csv", index_col="symbol").loc[symbol, :]
     stock_data["base_symbol"] = symbol
     return stock_data
 
@@ -27,7 +27,7 @@ def adjust_by_ratio(df: pd.DataFrame, ratio: float):
 
 
 def adjust_local_price(df: pd.DataFrame):
-    historic_ccl = pd.read_csv("data/inputs/dolar_ccl_historic.csv", index_col="Fecha")
+    historic_ccl = pd.read_csv("data/dolar_ccl_historic.csv", index_col="Fecha")
     historic_ccl.index = pd.to_datetime(historic_ccl.index)
 
     # Merge the two DataFrames based on the 'id' column

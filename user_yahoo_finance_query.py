@@ -28,7 +28,7 @@ def query_symbol_data_yf(species_data):
 
 
 def update_yahoo_data():
-    cedear_data = pd.read_csv("data/inputs/cedear_ratios.csv")
+    cedear_data = pd.read_csv("data/cedear_ratios.csv")
     queried_df = query_symbol_data_yf(cedear_data)
 
     df_merged_by_country = split_into_countries(df=queried_df, species_data=cedear_data)
@@ -37,5 +37,5 @@ def update_yahoo_data():
 
     cols = ["base_symbol", "shortName", "open_BA", "ask_BA", "bid_BA", "open_D_BA", "bid_D_BA", "ask_D_BA", "volume_BA",
             "volume_D_BA", "MEP", "USD/ARS ask", "USD/ARS bid", "ganDols", "ganPesos"]
-    df_with_adj_prices[cols].to_csv("data/outputs/df_mep.csv", index=False)
+    df_with_adj_prices[cols].to_csv("data/df_mep.csv", index=False)
 

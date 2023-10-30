@@ -18,7 +18,7 @@ min_vol_usd = st.number_input("Min Volume USD", step=1250, value=5 * 10 ** 3)
 max_spread = 0.5
 
 
-df_with_adj_prices = pd.read_csv("data/outputs/df_mep.csv")
+df_with_adj_prices = pd.read_csv("data/df_mep.csv")
 
 df_with_adj_prices["vol_ARS"] = df_with_adj_prices["volume_BA"] * df_with_adj_prices["open_BA"]
 df_with_adj_prices["vol_USD"] = df_with_adj_prices["volume_D_BA"] * df_with_adj_prices["open_D_BA"]
@@ -59,7 +59,7 @@ for col_name in ["USD/ARS bid", "USD/ARS ask"]:
     ccl_puntas.append(ccl)
 
 new_ccl = sum(ccl_puntas) / 2
-ccl_path = "data/inputs/dolar_ccl_historic.csv"
+ccl_path = "data/dolar_ccl_historic.csv"
 ccl_data = pd.read_csv(ccl_path, index_col="Fecha")
 today_date = dt.date.today().strftime("%m/%d/%Y")
 ccl_data.loc[today_date, :] = new_ccl
