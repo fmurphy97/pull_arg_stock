@@ -29,7 +29,7 @@ def adjust_prices(df, species_data, metric="open"):
     return df_w_ratio
 
 
-def split_into_countries(df, species_data):
+def split_into_countries_cedear(df, species_data):
     df = df[~df['symbol'].isna()]
     df_local_ars = df[df['symbol'].isin(species_data['symbol_arg'])]
     df_local_usd = df[df['symbol'].isin(species_data['symbol_arg_usd'])]
@@ -38,5 +38,18 @@ def split_into_countries(df, species_data):
     # Merge df in pesos and dollars
     df_usd = pd.merge(df_ext_usd, df_local_usd, on="base_symbol", how='outer', suffixes=('', '_D_BA'))
     df_merged = pd.merge(df_usd, df_local_ars, on="base_symbol", how='outer', suffixes=('', '_BA'))
+
+    return df_merged
+
+
+def split_into_countries_on(df):
+    df = df[~df['symbol'].isna()]
+    df_local_ars = df[df['currency'] == "ARS"]
+    df_local_usd = df[df['currency'] == "USD"]
+
+    # Merge df in pesos and dollars
+    df_merged = pd.merge(df_local_usd, df_local_ars, on="base_symbol", how='outer', suffixes=('_D_BA', '_BA'))
+
+    df_merged.rename({"base_symbol_BA": "base_symbol}"}, inplace=True)
 
     return df_merged

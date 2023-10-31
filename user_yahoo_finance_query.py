@@ -1,7 +1,7 @@
 import yfinance as yf
 import pandas as pd
 from tqdm import tqdm
-from utils.clean_cedear_data import split_into_countries, calculate_mep, adjust_prices
+from utils.clean_cedear_data import split_into_countries_cedear, calculate_mep, adjust_prices
 
 
 def query_symbol_data_yf(species_data):
@@ -31,7 +31,7 @@ def update_yahoo_data():
     cedear_data = pd.read_csv("data/cedear_ratios.csv")
     queried_df = query_symbol_data_yf(cedear_data)
 
-    df_merged_by_country = split_into_countries(df=queried_df, species_data=cedear_data)
+    df_merged_by_country = split_into_countries_cedear(df=queried_df, species_data=cedear_data)
     df_with_mep_values = calculate_mep(df=df_merged_by_country)
     df_with_adj_prices = adjust_prices(df=df_with_mep_values, species_data=cedear_data)
 

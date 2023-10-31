@@ -1,7 +1,7 @@
 import pandas as pd
 from iolApi.token import Token
 from iolApi.titlequery import TitleQuery
-from utils.clean_cedear_data import split_into_countries, calculate_mep
+from utils.clean_cedear_data import split_into_countries_cedear, calculate_mep, split_into_countries_on
 
 
 def query_data():
@@ -49,7 +49,15 @@ def join_local_vs_foreign_asset(df, asset_data):
         my_dict[row['symbol_arg_usd']] = row['symbol']
 
     df['base_symbol'] = df['symbol'].map(my_dict)
-    df2 = split_into_countries(df, asset_data)
+    df2 = split_into_countries_cedear(df, asset_data)
+    df3 = calculate_mep(df2)
+
+    return df3
+
+
+def join_local_vs_foreign_asset_ons(df):
+    df['base_symbol'] = df['symbol'].str.split(".").str[0].str[:-1]
+    df2 = split_into_countries_on(df)
     df3 = calculate_mep(df2)
 
     return df3
@@ -60,6 +68,17 @@ def update_iol_data():
     queried_df = query_data()
     queried_df_formatted = format_output_df(queried_df)
     final_queried_df = join_local_vs_foreign_asset(df=queried_df_formatted, asset_data=asset_ratios)
+
+    cols = ["base_symbol", "shortName_D_BA", "open_BA", "bid_BA", "ask_BA", "open_D_BA", "bid_D_BA", "ask_D_BA",
+            "volume_BA", "volume_D_BA", "MEP", "USD/ARS ask", "USD/ARS bid"]
+    final_queried_df[cols].rename(columns={"shortName_D_BA": "shortName"}).to_csv("data/df_mep.csv",
+                                                                                  index=False)
+
+def update_iol_data_v2():
+    # BUG: not exporting correct relationships
+    queried_df = query_data()
+    queried_df_formatted = format_output_df(queried_df)
+    final_queried_df = join_local_vs_foreign_asset_ons(df=queried_df_formatted)
 
     cols = ["base_symbol", "shortName_D_BA", "open_BA", "bid_BA", "ask_BA", "open_D_BA", "bid_D_BA", "ask_D_BA",
             "volume_BA", "volume_D_BA", "MEP", "USD/ARS ask", "USD/ARS bid"]
