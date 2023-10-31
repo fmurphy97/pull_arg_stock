@@ -4,13 +4,13 @@ from iolApi.titlequery import TitleQuery
 from utils.clean_cedear_data import split_into_countries_cedear, calculate_mep, split_into_countries_on
 
 
-def query_data():
+def query_data(instrument_type="cedears"):
     # Create token and title query instances
     token = Token()
     title_query = TitleQuery(token)
 
     # Query any instrument
-    queried_data = title_query.get_instrument_data(instrument_type="cedears", country="argentina")
+    queried_data = title_query.get_instrument_data(instrument_type=instrument_type, country="argentina")
 
     # Get it into a df
     df = pd.DataFrame(queried_data['titulos'])
@@ -76,7 +76,7 @@ def update_iol_data():
 
 def update_iol_data_v2():
     # BUG: not exporting correct relationships
-    queried_df = query_data()
+    queried_df = query_data(instrument_type="obligacionesNegociables")
     queried_df_formatted = format_output_df(queried_df)
     final_queried_df = join_local_vs_foreign_asset_ons(df=queried_df_formatted)
 
