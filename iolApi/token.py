@@ -45,7 +45,7 @@ class Token:
         }
 
         # Make a POST request
-        response = requests.post(URL_TOKEN, headers=headers, data=data)
+        response = requests.post(URL_TOKEN, headers=headers, data=data, verify=False)
 
         response_json = response.json()
 

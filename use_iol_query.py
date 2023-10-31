@@ -63,7 +63,7 @@ def join_local_vs_foreign_asset_ons(df):
     return df3
 
 
-def update_iol_data():
+def update_iol_data_cedear(export_results=True):
     asset_ratios = pd.read_csv("data/cedear_ratios.csv")
     queried_df = query_data()
     queried_df_formatted = format_output_df(queried_df)
@@ -71,16 +71,33 @@ def update_iol_data():
 
     cols = ["base_symbol", "shortName_D_BA", "open_BA", "bid_BA", "ask_BA", "open_D_BA", "bid_D_BA", "ask_D_BA",
             "volume_BA", "volume_D_BA", "MEP", "USD/ARS ask", "USD/ARS bid"]
-    final_queried_df[cols].rename(columns={"shortName_D_BA": "shortName"}).to_csv("data/df_mep.csv",
-                                                                                  index=False)
 
-def update_iol_data_v2():
-    # BUG: not exporting correct relationships
+    final_queried_df = final_queried_df[cols].rename(columns={"shortName_D_BA": "shortName"})
+    if export_results:
+        final_queried_df.to_csv("data/df_mep.csv", index=False)
+    return final_queried_df
+
+
+def update_iol_data_on(export_results=True):
     queried_df = query_data(instrument_type="obligacionesNegociables")
     queried_df_formatted = format_output_df(queried_df)
     final_queried_df = join_local_vs_foreign_asset_ons(df=queried_df_formatted)
 
-    cols = ["base_symbol", "shortName_D_BA", "open_BA", "bid_BA", "ask_BA", "open_D_BA", "bid_D_BA", "ask_D_BA",
+    cols = ["base_symbol", "shortName", "open_BA", "bid_BA", "ask_BA", "open_D_BA", "bid_D_BA", "ask_D_BA",
             "volume_BA", "volume_D_BA", "MEP", "USD/ARS ask", "USD/ARS bid"]
-    final_queried_df[cols].rename(columns={"shortName_D_BA": "shortName"}).to_csv("data/df_mep.csv",
-                                                                                  index=False)
+    final_queried_df = final_queried_df[cols]
+
+    if export_results:
+        final_queried_df[cols].to_csv("data/df_mep.csv", index=False)
+    return final_queried_df
+
+
+def update_iol_data(export_results=True):
+    cedear_df = update_iol_data_cedear(export_results=False)
+    on_df = update_iol_data_on(export_results=False)
+
+    combined_df = pd.concat([cedear_df, on_df])
+
+    if export_results:
+        combined_df.to_csv("data/df_mep.csv", index=False)
+    return combined_df

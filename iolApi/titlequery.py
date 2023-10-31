@@ -17,7 +17,7 @@ class TitleQuery:
         headers = {'Authorization': f'Bearer {api_key}'}
         response = requests.get(
             f'{URL_API}/Cotizaciones/{instrument_type}/{country}/Todos?',
-            headers=headers)
+            headers=headers, verify=False)
         return response.json()
 
     def get_panel_data(self, instrument_type, panel, country):
@@ -27,7 +27,7 @@ class TitleQuery:
         headers = {'Authorization': f'Bearer {api_key}'}
         response = requests.get(
             f'{URL_API}/Cotizaciones/{instrument_type}/{panel}/{country}',
-            headers=headers)
+            headers=headers, verify=False)
         return response.json()
 
     def get_ticker_data(self, market, symbol, period):
@@ -40,7 +40,7 @@ class TitleQuery:
         headers = {'Authorization': f'Bearer {api_key}'}
         response = requests.get(
             f'{URL_API}/{market}/Titulos/{symbol}/CotizacionDetalleMobile/{period}',
-            headers=headers)
+            headers=headers, verify=False)
         return response.json()
 
     def get_historical_series(self, market, symbol, date_from, date_to):
@@ -49,5 +49,5 @@ class TitleQuery:
         headers = {'Authorization': f'Bearer {self.token.get_token()}'}
         response = requests.get(
             f'{URL_API}/{market}/Titulos/{symbol}/Cotizacion/seriehistorica/{date_from}/{date_to}/ajustada',
-            headers=headers)
+            headers=headers, verify=False)
         return response.json()

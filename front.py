@@ -1,15 +1,22 @@
 import streamlit as st
 import pandas as pd
-from use_iol_query import update_iol_data
+from use_iol_query import update_iol_data, update_iol_data_cedear, update_iol_data_on
 from user_yahoo_finance_query import update_yahoo_data
 import datetime as dt
 
-# st.set_page_config(layout="wide")
+st.set_page_config(layout="wide")
 
 data_source = st.radio(label="Select Data Source", options=["IOL", "Yahoo Finance"], horizontal=True)
+if data_source == "IOL":
+    instrument_type = st.radio(label="Select Instrument Type", options=["ALL", "ON", "CEDEAR"], horizontal=True)
 if st.button("Refresh/Pull Data"):
     if data_source == "IOL":
-        update_iol_data()
+        if instrument_type == "ON":
+            update_iol_data_on()
+        elif instrument_type == "CEDEAR":
+            update_iol_data_cedear()
+        else:
+            update_iol_data()
     else:
         update_yahoo_data()
 
@@ -18,26 +25,26 @@ min_vol_usd = st.number_input("Min Volume USD", step=1250, value=5 * 10 ** 3)
 max_spread = 0.5
 
 
-df_with_adj_prices = pd.read_csv("data/df_mep.csv")
+df_mep = pd.read_csv("data/df_mep.csv")
 
-df_with_adj_prices["vol_ARS"] = df_with_adj_prices["volume_BA"] * df_with_adj_prices["open_BA"]
-df_with_adj_prices["vol_USD"] = df_with_adj_prices["volume_D_BA"] * df_with_adj_prices["open_D_BA"]
-df_with_adj_prices["spread_ARS"] = ((df_with_adj_prices["ask_BA"] - df_with_adj_prices["bid_BA"]).abs() * 2 /
-                                    (df_with_adj_prices["ask_BA"] + df_with_adj_prices["bid_BA"]))
-df_with_adj_prices["spread_USD"] = ((df_with_adj_prices["ask_D_BA"] - df_with_adj_prices["bid_D_BA"]).abs() * 2 /
-                                    (df_with_adj_prices["ask_D_BA"] + df_with_adj_prices["bid_D_BA"]))
-df_with_adj_prices["max_spread"] = df_with_adj_prices[['spread_ARS', 'spread_USD']].max(axis=1)
+df_mep["vol_ARS"] = df_mep["volume_BA"] * df_mep["open_BA"]
+df_mep["vol_USD"] = df_mep["volume_D_BA"] * df_mep["open_D_BA"]
+df_mep["spread_ARS"] = ((df_mep["ask_BA"] - df_mep["bid_BA"]).abs() * 2 /
+                        (df_mep["ask_BA"] + df_mep["bid_BA"]))
+df_mep["spread_USD"] = ((df_mep["ask_D_BA"] - df_mep["bid_D_BA"]).abs() * 2 /
+                        (df_mep["ask_D_BA"] + df_mep["bid_D_BA"]))
+df_mep["max_spread"] = df_mep[['spread_ARS', 'spread_USD']].max(axis=1)
 
-df_with_adj_prices = df_with_adj_prices[
-    (df_with_adj_prices["vol_USD"] >= min_vol_usd)
-    & (df_with_adj_prices["max_spread"] < max_spread)
+df_mep = df_mep[
+    (df_mep["vol_USD"] >= min_vol_usd)
+    & (df_mep["max_spread"] < max_spread)
     ]
 
 # Remove outliers in terms of USD/ARS relationship
 for col_name in ["USD/ARS bid", "USD/ARS ask"]:
-    reference_value = df_with_adj_prices[col_name].median()
-    df_with_adj_prices = df_with_adj_prices[
-        (df_with_adj_prices["USD/ARS ask"] - reference_value).abs() / reference_value < 0.5]
+    reference_value = df_mep[col_name].median()
+    df_mep = df_mep[
+        (df_mep["USD/ARS ask"] - reference_value).abs() / reference_value < 0.5]
 
 
 column_config = {"bid_D_BA": st.column_config.NumberColumn("bid_D_BA", format="%.2f"),
@@ -50,12 +57,13 @@ column_config = {"bid_D_BA": st.column_config.NumberColumn("bid_D_BA", format="%
                  }
 
 # CALCULATE CCL
-df_with_adj_prices["volume_total"] = (df_with_adj_prices["volume_BA"] + df_with_adj_prices["volume_D_BA"])
+ccl_estimate = (df_mep["USD/ARS ask"].mean()+df_mep["USD/ARS bid"].mean()) / 2
+df_mep["volume_total"] = (df_mep["vol_ARS"] + df_mep["vol_USD"] * ccl_estimate)
 
 ccl_puntas = []
 for col_name in ["USD/ARS bid", "USD/ARS ask"]:
-    df_with_adj_prices["aux"] = df_with_adj_prices[col_name] * df_with_adj_prices['volume_total']
-    ccl = df_with_adj_prices["aux"].sum() / df_with_adj_prices['volume_total'].sum()
+    df_mep["aux"] = df_mep[col_name] * df_mep['volume_total']
+    ccl = df_mep["aux"].sum() / df_mep['volume_total'].sum()
     ccl_puntas.append(ccl)
 
 new_ccl = sum(ccl_puntas) / 2
@@ -66,24 +74,25 @@ ccl_data.loc[today_date, :] = new_ccl
 ccl_data.to_csv(ccl_path)
 
 
-cols = st.columns(2)
+cols = st.columns(3)
 cols[0].metric(label="CCL Avg Compra", value="$ {:.1f}".format(round(ccl_puntas[0], 1)))
-cols[1].metric(label="CCL Avg Venta", value="$ {:.1f}".format(round(ccl_puntas[1], 1)))
+cols[1].metric(label="CCL Avg", value="$ {:.1f}".format(round(new_ccl, 1)))
+cols[2].metric(label="CCL Avg Venta", value="$ {:.1f}".format(round(ccl_puntas[1], 1)))
 
-st.dataframe(df_with_adj_prices[["base_symbol", "shortName", "bid_BA", "ask_BA", "bid_D_BA", "ask_D_BA",
+st.dataframe(df_mep[["base_symbol", "shortName", "bid_BA", "ask_BA", "bid_D_BA", "ask_D_BA",
 "vol_ARS", "vol_USD", "USD/ARS bid", "USD/ARS ask"]]
-             , hide_index=True, column_config=column_config)
+             , hide_index=True, column_config=column_config, width=5000)
 
-st.markdown("## Los Mejores")
-max_col1_row = df_with_adj_prices[df_with_adj_prices['USD/ARS bid'] == df_with_adj_prices['USD/ARS bid'].max()]
-min_col2_row = df_with_adj_prices[df_with_adj_prices['USD/ARS ask'] == df_with_adj_prices['USD/ARS ask'].min()]
+st.markdown("## WINNERS")
+max_col1_row = df_mep[df_mep['USD/ARS bid'] == df_mep['USD/ARS bid'].max()]
+min_col2_row = df_mep[df_mep['USD/ARS ask'] == df_mep['USD/ARS ask'].min()]
 max_col1_row['Obj'] = 'Buy USD'
 min_col2_row['Obj'] = 'Buy ARS'
 
 best_assets = pd.concat([max_col1_row, min_col2_row])
 st.dataframe(best_assets[["base_symbol", "shortName", "bid_BA", "ask_BA", "bid_D_BA", "ask_D_BA",
 "USD/ARS bid", "USD/ARS ask", 'Obj']]
-             , hide_index=True, column_config=column_config)
+             , hide_index=True, column_config=column_config, width=5000)
 
 usd_entry_point = max_col1_row['USD/ARS bid'].iloc[0]
 ars_entry_point = min_col2_row['USD/ARS ask'].iloc[0]
