@@ -50,6 +50,6 @@ def split_into_countries_on(df):
     # Merge df in pesos and dollars
     df_merged = pd.merge(df_local_usd, df_local_ars, on="base_symbol", how='outer', suffixes=('_D_BA', '_BA'))
 
-    df_merged.rename({"base_symbol_BA": "base_symbol}"}, inplace=True)
+    df_merged.rename(columns={"base_symbol_BA": "base_symbol", "shortName_BA": "shortName"}, inplace=True)
 
     return df_merged
