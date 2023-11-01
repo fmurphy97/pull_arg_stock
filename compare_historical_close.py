@@ -83,25 +83,32 @@ def candle_plot(dfs_by_symbol):
 
 
 symbol_usa = st.text_input("Select a symbol", value="SPY").upper()
-symbol_data = get_stock_info(symbol_usa)
-df1, df2, df3 = query_historical_data(stock_data=symbol_data, period="1y", interval="1d")
+selected_period = st.radio("Select an Period", ["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"],
+                           horizontal=True)
+selected_interval = st.radio("Select an Interval",
+                             ["1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "5d", "1wk", "1mo", "3mo"],
+                             horizontal=True)
 
-df1 = df1.round(2)
-df2 = df2.round(2)
-df3 = df3.round(2)
 
-asset_data_by_symbol = {
-    symbol_data.base_symbol: df1,
-    symbol_data.symbol_arg_usd: df2,
-    symbol_data.symbol_arg: df3
-}
 
-fig_area_plot = area_plot(asset_data_by_symbol)
-st.plotly_chart(fig_area_plot)
+if st.button("RUN"):
+    symbol_data = get_stock_info(symbol_usa)
 
-fig_candle_plot = candle_plot(asset_data_by_symbol)
-st.plotly_chart(fig_candle_plot)
+    df1, df2, df3 = query_historical_data(stock_data=symbol_data, period=selected_period, interval=selected_interval)
 
-# # df4 = (df2["Adj Close"] / df1["Adj Close"] - 1)
-# # plt.plot(df3.index, df4, label="Stock 2")
-# # plt.show()
+    df1 = df1.round(2)
+    df2 = df2.round(2)
+    df3 = df3.round(2)
+
+    asset_data_by_symbol = {
+        symbol_data.base_symbol: df1,
+        symbol_data.symbol_arg_usd: df2,
+        symbol_data.symbol_arg: df3
+    }
+
+    fig_area_plot = area_plot(asset_data_by_symbol)
+    st.plotly_chart(fig_area_plot)
+
+    fig_candle_plot = candle_plot(asset_data_by_symbol)
+    st.plotly_chart(fig_candle_plot)
+
