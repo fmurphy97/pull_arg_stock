@@ -5,7 +5,7 @@ URL_API = 'https://api.invertironline.com/api/v2/'
 COUNTRIES = ['argentina', 'estados_Unidos']
 MARKETS = ['bcBA', 'nYSE', 'nASDAQ', 'aMEX', 'bCS', 'rOFX']
 PERIODS = ["t0", "t1", "t2"]
-INSTRUMENT_TYPES = ['acciones', 'opciones', 'monedas', 'cedears', 'titulosPublicos' 'cauciones', 'cHPD', 'futuros',
+INSTRUMENT_TYPES = ['acciones', 'opciones', 'monedas', 'cedears', 'titulosPublicos', 'cauciones', 'cHPD', 'futuros',
                     'aDRs', 'obligacionesNegociables', 'letras']
 INSTRUMENT_TYPES_FOR_PANEL = {
     'bonos': ['todos', 'soberanosEnPesosMasCer', 'soberanosEnPesosTasaVariable', 'soberanosEnPesosTasaFija',
