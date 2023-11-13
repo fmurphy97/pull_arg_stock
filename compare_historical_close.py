@@ -10,16 +10,25 @@ def get_stock_info(symbol: str):
     return stock_data
 
 
-def query_historical_data(stock_data: pd.DataFrame, period: str, interval: str):
-    foreign_usd_df = yf.download(stock_data.base_symbol, period=period, interval=interval)
-    foreign_usd_adj_df = adjust_by_ratio(foreign_usd_df, stock_data.ratio)
+def query_historical_data(stock_data: pd.DataFrame, period: str, interval: str,
+                          use_local_usd=True, use_local_ars=True, use_ext_usd=True):
+    dfs = {}
 
-    local_usd_df = yf.download(stock_data.symbol_arg_usd, period=period, interval=interval)
+    if use_ext_usd:
+        foreign_usd_df = yf.download(stock_data.base_symbol, period=period, interval=interval)
+        foreign_usd_adj_df = adjust_by_ratio(foreign_usd_df, stock_data.ratio)
+        dfs[symbol_data.base_symbol] = foreign_usd_adj_df
 
-    local_ars_df = yf.download(stock_data.symbol_arg, period=period, interval=interval)
-    local_ars_adj_df = adjust_local_price(local_ars_df)
+    if use_local_usd:
+        local_usd_df = yf.download(stock_data.symbol_arg_usd, period=period, interval=interval)
+        dfs[symbol_data.symbol_arg_usd] = local_usd_df
 
-    return foreign_usd_adj_df, local_usd_df, local_ars_adj_df
+    if use_local_ars:
+        local_ars_df = yf.download(stock_data.symbol_arg, period=period, interval=interval)
+        local_ars_adj_df = adjust_local_price(local_ars_df)
+        dfs[symbol_data.symbol_arg] = local_ars_adj_df
+
+    return dfs
 
 
 def adjust_by_ratio(df: pd.DataFrame, ratio: float):
@@ -83,32 +92,30 @@ def candle_plot(dfs_by_symbol):
 
 
 symbol_usa = st.text_input("Select a symbol", value="SPY").upper()
-selected_period = st.radio("Select an Period", ["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"],
-                           horizontal=True)
-selected_interval = st.radio("Select an Interval",
-                             ["1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "5d", "1wk", "1mo", "3mo"],
+
+possible_periods = ["1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h",
+                    "1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"]
+
+selected_period = st.radio("Select an Period", possible_periods[possible_periods.index("1d"):], horizontal=True)
+selected_interval = st.radio("Select an Interval", possible_periods[:possible_periods.index(selected_period)],
                              horizontal=True)
 
-
+use_local_ars_data = st.checkbox("Use local ARS", value=False)
+use_ext_usd_data = st.checkbox("Use Foreign USD", value=True)
+use_local_usd_data = st.checkbox("Use local USD", value=True)
 
 if st.button("RUN"):
     symbol_data = get_stock_info(symbol_usa)
 
-    df1, df2, df3 = query_historical_data(stock_data=symbol_data, period=selected_period, interval=selected_interval)
+    asset_data_by_symbol = query_historical_data(
+        stock_data=symbol_data, period=selected_period, interval=selected_interval,
+        use_local_usd=use_local_usd_data, use_local_ars=use_local_ars_data, use_ext_usd=use_ext_usd_data)
 
-    df1 = df1.round(2)
-    df2 = df2.round(2)
-    df3 = df3.round(2)
-
-    asset_data_by_symbol = {
-        symbol_data.base_symbol: df1,
-        symbol_data.symbol_arg_usd: df2,
-        symbol_data.symbol_arg: df3
-    }
+    for symbol, df in asset_data_by_symbol.items():
+        asset_data_by_symbol[symbol] = df.round(2)
 
     fig_area_plot = area_plot(asset_data_by_symbol)
     st.plotly_chart(fig_area_plot)
 
     fig_candle_plot = candle_plot(asset_data_by_symbol)
     st.plotly_chart(fig_candle_plot)
-
