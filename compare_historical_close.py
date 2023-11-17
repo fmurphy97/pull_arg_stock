@@ -93,8 +93,9 @@ def candle_plot(dfs_by_symbol):
 
 symbol_usa = st.text_input("Select a symbol", value="SPY").upper()
 
-possible_periods = ["1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h",
-                    "1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"]
+possible_periods = [
+    # "1m", "2m", "5m", "15m", "30m", "60m", "90m",
+    "1h", "1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"]
 
 selected_period = st.radio("Select an Period", possible_periods[possible_periods.index("1d"):], horizontal=True)
 selected_interval = st.radio("Select an Interval", possible_periods[:possible_periods.index(selected_period)],
