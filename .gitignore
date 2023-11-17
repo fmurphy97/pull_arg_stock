@@ -1,5 +1,9 @@
 #
 iolApi/private_constants.py
+data/df_mep.csv
+data/dolar_ccl_historic.csv
+
+
 .idea
 
 
