@@ -1,1 +1,0 @@
-streamlit run compare_historical_close.py
