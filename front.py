@@ -62,8 +62,8 @@ df_mep["volume_total"] = (df_mep["vol_ARS"] + df_mep["vol_USD"] * ccl_estimate)
 
 ccl_puntas = []
 for col_name in ["USD/ARS bid", "USD/ARS ask"]:
-    df_mep["aux"] = df_mep[col_name] * df_mep['volume_total']
-    ccl = df_mep["aux"].sum() / df_mep['volume_total'].sum()
+    df_mep["aux"] = df_mep[col_name] * df_mep['vol_USD']
+    ccl = df_mep["aux"].sum() / df_mep['vol_USD'].sum()
     ccl_puntas.append(ccl)
 
 new_ccl = sum(ccl_puntas) / 2
