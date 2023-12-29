@@ -1,26 +1,25 @@
-from tqdm import tqdm
 import yfinance as yf
 import pandas as pd
 from datetime import datetime
 from utils.symbol_data_extractor import SymbolDataExtractor
+from pathlib import Path
 
 
 class YahooDataExtractor(SymbolDataExtractor):
 
     def __init__(self):
         super().__init__()
-        self.col_mapping = {
-            "symbol": 'symbol',
-            "close": 'Adj Close',
-            "dayMax": 'High',
-            "dayMin": 'Low',
-            "open": 'Open',
-            "volume": 'Volume'}
+        self.col_mapping = {'symbol': 'symbol',
+                            'Adj Close': 'close',
+                            'High': 'dayMax',
+                            'Low': 'dayMin',
+                            'Open': 'open',
+                            'Volume': 'volume'}
 
-        self.queried_df = None
 
     def get_data(self):
-        cedear_ratios = pd.read_excel("../data/cedear_ratios_reloaded.xlsx", sheet_name="cedear")
+        ratios_data_path = Path(__file__).parent.parent.joinpath("data", "cedear_ratios_reloaded.xlsx")
+        cedear_ratios = pd.read_excel(ratios_data_path, sheet_name="cedear")
         cedear_ratios = cedear_ratios[
             (cedear_ratios["type"].isin(["base", "dolar"]))
             & (cedear_ratios["can_use"] == 1)
@@ -34,22 +33,22 @@ class YahooDataExtractor(SymbolDataExtractor):
         stacked_df = filtered_df.stack(level=0).T.reset_index().droplevel(0, axis=1)
         stacked_df.rename(columns={'': 'symbol'}, inplace=True)
 
-        self.queried_df = stacked_df
+        self.clean_df = stacked_df
 
     def format_output(self):
-        self.queried_df['symbol'] = self.queried_df['symbol'].str.split('.').str[0]
-        self.queried_df['exchange'] = "BUE"
-        self.queried_df['settlementPeriod'] = 48
-
-        # Add currency
-        cedear_ratios = pd.read_excel("../data/cedear_ratios_reloaded.xlsx", sheet_name="cedear")
-        self.queried_df = self.queried_df.merge(cedear_ratios[["symbol", "currency"]], on="symbol", how="left")
+        # Set the symbol name correctly
+        self.clean_df['symbol'] = self.clean_df['symbol'].str.split('.').str[0]
 
         # The following data is not available
-        self.queried_df['ask'] = None
-        self.queried_df['bid'] = None
-        self.queried_df['askSize'] = None
-        self.queried_df['bidSize'] = None
+        self.clean_df['exchange'] = "BUE"
+        self.clean_df['settlementPeriod'] = 48
+        self.clean_df['ask'] = None
+        self.clean_df['bid'] = None
+        self.clean_df['askSize'] = None
+        self.clean_df['bidSize'] = None
 
-        # Keep only relevant columns
-        self.clean_df = self.queried_df
+
+if __name__ == "__main__":
+    data_extractor = YahooDataExtractor()
+    data_extractor.run()
+    data_df = data_extractor.clean_df

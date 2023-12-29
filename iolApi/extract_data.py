@@ -41,10 +41,10 @@ class IolDataExtractor(SymbolDataExtractor):
         self.clean_df['currency'] = self.clean_df['currency'].replace({"1": 'ARS', "2": 'USD'})
         self.clean_df['exchange'] = self.clean_df['exchange'].replace({"1": 'BUE'})
 
+        # This data is not available
         self.clean_df['settlementPeriod'] = 48
 
-        # Keep only relevant columns
-        self.clean_df = self.clean_df[self.columns_to_output]
+
 
 
 if __name__ == "__main__":

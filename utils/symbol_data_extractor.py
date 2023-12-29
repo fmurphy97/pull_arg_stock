@@ -11,6 +11,10 @@ class SymbolDataExtractor:
     def run(self):
         self.get_data()
         self.format_output()
+        # Rename columns
+        self.clean_df.rename(columns=self.col_mapping, inplace=True)
+        # Keep only relevant columns
+        self.clean_df = self.clean_df[self.columns_to_output]
 
     def get_data(self):
         pass

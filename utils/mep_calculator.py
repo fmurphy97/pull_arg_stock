@@ -1,19 +1,19 @@
 from cocos_query.extract_data import CocosDataExtractor
 from iolApi.extract_data import IolDataExtractor
 from yahoo.extract_data import YahooDataExtractor
+from pathlib import Path
 import pandas as pd
 
 
 class MepCalculator:
+    switch_dict = {
+        "IOL": IolDataExtractor,
+        "Yahoo": YahooDataExtractor,
+        "Cocos": CocosDataExtractor,
+    }
 
     def __init__(self, selected_data_extractor_name, asset_type="cedear"):
-        switch_dict = {
-            "IOL": IolDataExtractor,
-            "Yahoo": YahooDataExtractor,
-            "Cocos": CocosDataExtractor,
-        }
-
-        selected_data_extractor = switch_dict.get(selected_data_extractor_name)
+        selected_data_extractor = MepCalculator.switch_dict.get(selected_data_extractor_name)
 
         self.data_extractor_instance = selected_data_extractor()
         self.data_extractor_instance.run()
@@ -24,7 +24,8 @@ class MepCalculator:
 
     def join_with_asset_data(self):
         """Join with cedear data to get the ratio, the currency and the base symbol"""
-        cedear_ratios = pd.read_excel("../data/cedear_ratios_reloaded.xlsx", sheet_name=self.asset_type)
+        ratios_data_path = Path(__file__).parent.parent.joinpath("data", "cedear_ratios_reloaded.xlsx")
+        cedear_ratios = pd.read_excel(ratios_data_path, sheet_name=self.asset_type)
         df_merged = pd.merge(self.queried_data, cedear_ratios, on="symbol", how="left")
         self.merged_df = df_merged
 
@@ -59,6 +60,6 @@ class MepCalculator:
 
 
 if __name__ == "__main__":
-    comb = MepCalculator(selected_data_extractor_name="IOL", asset_type="cedear")
+    comb = MepCalculator(selected_data_extractor_name="Yahoo", asset_type="cedear")
     comb.run()
     data_df = comb.merged_df
