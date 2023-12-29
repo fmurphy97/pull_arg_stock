@@ -112,8 +112,8 @@ if st.button("RUN"):
         stock_data=symbol_data, period=selected_period, interval=selected_interval,
         use_local_usd=use_local_usd_data, use_local_ars=use_local_ars_data, use_ext_usd=use_ext_usd_data)
 
-    for symbol, df in asset_data_by_symbol.items():
-        asset_data_by_symbol[symbol] = df.round(2)
+    for symbol_i, df_i in asset_data_by_symbol.items():
+        asset_data_by_symbol[symbol_i] = df_i.round(2)
 
     fig_area_plot = area_plot(asset_data_by_symbol)
     st.plotly_chart(fig_area_plot)

@@ -1,55 +1,46 @@
 import pandas as pd
-import re
+from utils.symbol_data_extractor import SymbolDataExtractor
+from utils.useful_functions import correct_str
 
 
-def get_data():
-    # Read all files
-    df_0 = pd.read_csv("cedear_0.txt", sep="\t", dtype=str)
-    df_24 = pd.read_csv("cedear_24.txt", sep="\t", dtype=str)
-    df_48 = pd.read_csv("cedear_48.txt", sep="\t", dtype=str)
-    df_concat = pd.concat([df_0, df_24, df_48])
+class CocosDataExtractor(SymbolDataExtractor):
 
-    return df_concat
+    def __init__(self):
+        super().__init__()
+        self.col_mapping = {'Especie': "symbol", 'Anterior': "open", 'Máx': "dayMax", 'Mín': "dayMin",
+                            'Cierre': "close", 'Oper.': "volume", 'mercado': "exchange", 'moneda': "currency",
+                            'CC': "bidSize", 'PC': "bid", 'PV': "ask", 'CV': "askSize", 'Plazo': "settlementPeriod"}
 
+    def get_data(self):
+        # Read all files
+        df_0 = pd.read_csv("cedear_0.txt", sep="\t", dtype=str)
+        df_24 = pd.read_csv("cedear_24.txt", sep="\t", dtype=str)
+        df_48 = pd.read_csv("cedear_48.txt", sep="\t", dtype=str)
+        df_concat = pd.concat([df_0, df_24, df_48])
 
-def correct_str(input_str):
-    # Correct the columns types
-    input_str = input_str.replace(".", "")
-    input_str = input_str.replace(",", ".")
+        self.clean_df = df_concat
 
-    input_str = re.sub("[^0-9^.]", "", input_str)
+    def format_output(self):
+        # Rename columns
+        self.clean_df.rename(columns=self.col_mapping, inplace=True)
 
-    if input_str == '':
-        input_str = 0.0
-    return float(input_str)
+        self.clean_df['exchange'] = "BUE"
+        self.clean_df['settlementPeriod'] = self.clean_df['settlementPeriod'].replace(
+            {"C.I.": 0, "24hs.": 24, "48hs.": 48})
+        self.clean_df['currency'] = None
 
+        for col_name in ["open", "dayMax", "dayMin", "close", "volume", "bidSize", "bid", "ask", "askSize"]:
+            self.clean_df[col_name] = self.clean_df[col_name].apply(correct_str)
 
-def format_output_df(df_cedear):
-    # Rename columns
-    es_to_en_col_mapping = {'Especie': "symbol", 'Anterior': "open", 'Máx': "dayMax", 'Mín': "dayMin",
-                            'Cierre': "close",
-                            'Oper.': "volume", 'mercado': "exchange", 'moneda': "currency", 'CC': "bidSize",
-                            'PC': "bid",
-                            'PV': "ask", 'CV': "askSize", 'Plazo': "settlementPeriod"}
-    df_cedear.rename(columns=es_to_en_col_mapping, inplace=True)
+        for col_name in ["volume", "bidSize", "askSize"]:
+            self.clean_df[col_name] = self.clean_df[col_name].astype(int)
 
-    df_cedear['exchange'] = "BUE"
-    df_cedear['settlementPeriod'] = df_cedear['settlementPeriod'].replace({"C.I.": 0, "24hs.": 24, "48hs.": 48})
+        df_cedear = self.clean_df[self.columns_to_output]
 
-    for col_name in ["open", "dayMax", "dayMin", "close", "volume", "bidSize", "bid", "ask", "askSize"]:
-        df_cedear[col_name] = df_cedear[col_name].apply(correct_str)
-
-    for col_name in ["volume", "bidSize", "askSize"]:
-        df_cedear[col_name] = df_cedear[col_name].astype(int)
-
-    df_cedear = df_cedear[['symbol', 'open', 'dayMax', 'dayMin', 'close', 'volume', 'exchange',
-                           'bidSize', 'bid', 'ask', 'askSize', 'settlementPeriod']]
-
-    return df_cedear
+        return df_cedear
 
 
 if __name__ == '__main__':
-    queried_data = get_data()
-    data_formatted = format_output_df(queried_data)
-    data_formatted.to_csv("../data/queried_data.csv", index=False)
-
+    data_extractor = CocosDataExtractor()
+    data_extractor.run()
+    data_extractor.clean_df.to_csv("../data/queried_data.csv", index=False)

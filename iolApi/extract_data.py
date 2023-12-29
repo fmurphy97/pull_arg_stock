@@ -1,45 +1,53 @@
 import pandas as pd
+
 from iolApi.token import Token
 from iolApi.titlequery import TitleQuery
+from utils.symbol_data_extractor import SymbolDataExtractor
 
 
-def query_data(instrument_type="cedears"):
-    # Create token and title query instances
-    token = Token()
-    title_query = TitleQuery(token)
+class IolDataExtractor(SymbolDataExtractor):
 
-    # Query any instrument
-    queried_data = title_query.get_instrument_data(instrument_type=instrument_type, country="argentina")
+    def __init__(self, instrument_type="cedears"):
+        super().__init__()
 
-    # Get it into a df
-    df = pd.DataFrame(queried_data['titulos'])
+        self.col_mapping = {'simbolo': "symbol", 'apertura': "open", 'maximo': "dayMax", 'minimo': "dayMin",
+                            'ultimoCierre': "close", 'volumen': "volume", 'mercado': "exchange",
+                            'moneda': "currency", 'descripcion': "shortName", 'cantidadCompra': "bidSize",
+                            'precioCompra': "bid", 'precioVenta': "ask", 'cantidadVenta': "askSize"}
 
-    return df
+        self.instrument_type = instrument_type
 
+    def get_data(self):
+        # Create token and title query instances
+        token = Token()
+        title_query = TitleQuery(token)
 
-def format_output_df(df):
-    # Expand the puntas column
-    df = df[~df["puntas"].isna()]
-    df[[key for key in df['puntas'].iloc[0].keys()]] = df['puntas'].apply(lambda x: pd.Series(x))
+        # Query any instrument
+        queried_data = title_query.get_instrument_data(instrument_type=self.instrument_type, country="argentina")
 
-    # Re-Map english to spanish columns
-    es_to_en_col_mapping = {'simbolo': "symbol", 'apertura': "open", 'maximo': "dayMax", 'minimo': "dayMin",
-                            'ultimoCierre': "close", 'volumen': "volume", 'mercado': "exchange", 'moneda': "currency",
-                            'descripcion': "shortName", 'cantidadCompra': "bidSize", 'precioCompra': "bid",
-                            'precioVenta': "ask", 'cantidadVenta': "askSize"}
-    df.rename(columns=es_to_en_col_mapping, inplace=True)
+        # Get it into a df
+        self.clean_df = pd.DataFrame(queried_data['titulos'])
 
-    # Keep only relevant columns
-    df = df[list(es_to_en_col_mapping.values())]
+    def format_output(self):
+        # Expand the puntas column
+        self.clean_df = self.clean_df[~self.clean_df["puntas"].isna()]
+        self.clean_df[[key for key in self.clean_df['puntas'].iloc[0].keys()]] = \
+            self.clean_df['puntas'].apply(lambda x: pd.Series(x))
 
-    # Update currencies
-    df['currency'] = df['currency'].replace({"1": 'ARS', "2": 'USD'})
-    df['exchange'] = df['exchange'].replace({"1": 'BUE'})
+        # Re-Map english to spanish columns
+        self.clean_df.rename(columns=self.col_mapping, inplace=True)
 
-    df['settlementPeriod'] = 48
+        # Update currencies
+        self.clean_df['currency'] = self.clean_df['currency'].replace({"1": 'ARS', "2": 'USD'})
+        self.clean_df['exchange'] = self.clean_df['exchange'].replace({"1": 'BUE'})
 
-    return df
+        self.clean_df['settlementPeriod'] = 48
+
+        # Keep only relevant columns
+        self.clean_df = self.clean_df[self.columns_to_output]
+
 
 if __name__ == "__main__":
-    df = query_data(instrument_type="cedears")
-    df2 = format_output_df(df)
+    data_extractor = IolDataExtractor()
+    data_extractor.run()
+    data_df = data_extractor.clean_df

@@ -1,29 +1,39 @@
 import streamlit as st
 import pandas as pd
-from use_iol_query import update_iol_data, update_iol_data_cedear, update_iol_data_on
-from user_yahoo_finance_query import update_yahoo_data
+from utils.mep_calculator import MepCalculator
 import datetime as dt
 
 st.set_page_config(layout="wide")
 
 data_source = st.radio(label="Select Data Source", options=["IOL", "Yahoo Finance"], horizontal=True)
+
+instrument_type = None
 if data_source == "IOL":
     instrument_type = st.radio(label="Select Instrument Type", options=["ALL", "ON", "CEDEAR"], horizontal=True)
 if st.button("Refresh/Pull Data"):
-    if data_source == "IOL":
-        if instrument_type == "ON":
-            update_iol_data_on()
-        elif instrument_type == "CEDEAR":
-            update_iol_data_cedear()
-        else:
-            update_iol_data()
-    else:
-        update_yahoo_data()
+    comb = MepCalculator(selected_data_extractor_name=data_source, asset_type="cedear")
+    comb.run()
+    df_mep = comb.merged_df
 
 min_vol_usd = st.number_input("Min Volume USD", step=1250, value=5 * 10 ** 3)
 # max_spread = cols[1].number_input("Max Spread", step=0.1, value=0.5)
 max_spread = 0.5
 
+new_col_names = {
+    "base_symbol": "symbol_x",
+    "shortName": "shortName_x",
+    "open_BA": "open_x",
+    "bid_BA": "bid_x",
+    "ask_BA": "ask_x",
+    "open_D_BA": "open_y",
+    "bid_D_BA": "bid_y",
+    "ask_D_BA": "ask_y",
+    "volume_BA": "volume_x",
+    "volume_D_BA": "volume_y",
+    "MEP": "x/y mid",
+    "USD/ARS ask": "x/y ask",
+    "USD/ARS bid": "x/y bid"
+}
 
 df_mep = pd.read_csv("data/df_mep.csv")
 
@@ -46,7 +56,6 @@ for col_name in ["USD/ARS bid", "USD/ARS ask"]:
     df_mep = df_mep[
         (df_mep["USD/ARS ask"] - reference_value).abs() / reference_value < 0.5]
 
-
 column_config = {"bid_D_BA": st.column_config.NumberColumn("bid_D_BA", format="%.2f"),
                  "ask_D_BA": st.column_config.NumberColumn("ask_D_BA", format="%.2f"),
                  "USD/ARS ask": st.column_config.NumberColumn("USD/ARS ask", format="$ %.0f"),
@@ -57,7 +66,7 @@ column_config = {"bid_D_BA": st.column_config.NumberColumn("bid_D_BA", format="%
                  }
 
 # CALCULATE CCL
-ccl_estimate = (df_mep["USD/ARS ask"].mean()+df_mep["USD/ARS bid"].mean()) / 2
+ccl_estimate = (df_mep["USD/ARS ask"].mean() + df_mep["USD/ARS bid"].mean()) / 2
 df_mep["volume_total"] = (df_mep["vol_ARS"] + df_mep["vol_USD"] * ccl_estimate)
 
 ccl_puntas = []
@@ -73,14 +82,13 @@ today_date = dt.date.today().strftime("%m/%d/%Y")
 ccl_data.loc[today_date, :] = new_ccl
 ccl_data.to_csv(ccl_path)
 
-
 cols = st.columns(3)
 cols[0].metric(label="CCL Avg Compra", value="$ {:.1f}".format(round(ccl_puntas[0], 1)))
 cols[1].metric(label="CCL Avg", value="$ {:.1f}".format(round(new_ccl, 1)))
 cols[2].metric(label="CCL Avg Venta", value="$ {:.1f}".format(round(ccl_puntas[1], 1)))
 
 st.dataframe(df_mep[["base_symbol", "shortName", "bid_BA", "ask_BA", "bid_D_BA", "ask_D_BA",
-"vol_ARS", "vol_USD", "USD/ARS bid", "USD/ARS ask"]]
+                     "vol_ARS", "vol_USD", "USD/ARS bid", "USD/ARS ask"]]
              , hide_index=True, column_config=column_config, width=5000)
 
 st.markdown("## WINNERS")
@@ -91,7 +99,7 @@ min_col2_row['Obj'] = 'Buy ARS'
 
 best_assets = pd.concat([max_col1_row, min_col2_row])
 st.dataframe(best_assets[["base_symbol", "shortName", "bid_BA", "ask_BA", "bid_D_BA", "ask_D_BA",
-"USD/ARS bid", "USD/ARS ask", 'Obj']]
+                          "USD/ARS bid", "USD/ARS ask", 'Obj']]
              , hide_index=True, column_config=column_config, width=5000)
 
 usd_entry_point = max_col1_row['USD/ARS bid'].iloc[0]
@@ -110,5 +118,3 @@ with cols[1]:
     st.write(f"Sell {min_col2_row['base_symbol'].iloc[0]}D at {min_col2_row['bid_D_BA'].iloc[0]} USD")
 
 st.metric(label="expected_profit", value="{:.1f} %".format(round(expected_profit * 100, 1)))
-
-
