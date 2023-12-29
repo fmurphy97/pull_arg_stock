@@ -1,5 +1,6 @@
 from cocos_query.extract_data import CocosDataExtractor
 from iolApi.extract_data import IolDataExtractor
+from yahoo.extract_data import YahooDataExtractor
 import pandas as pd
 
 
@@ -8,7 +9,7 @@ class MepCalculator:
     def __init__(self, selected_data_extractor_name, asset_type="cedear"):
         switch_dict = {
             "IOL": IolDataExtractor,
-            "Yahoo": "",
+            "Yahoo": YahooDataExtractor,
             "Cocos": CocosDataExtractor,
         }
 
