@@ -7,114 +7,98 @@ st.set_page_config(layout="wide")
 
 data_source = st.radio(label="Select Data Source", options=["IOL", "Yahoo Finance"], horizontal=True)
 
+# Select Data source
 instrument_type = None
 if data_source == "IOL":
     instrument_type = st.radio(label="Select Instrument Type", options=["ALL", "ON", "CEDEAR"], horizontal=True)
 if st.button("Refresh/Pull Data"):
     comb = MepCalculator(selected_data_extractor_name=data_source, asset_type="cedear")
     comb.run()
-    df_mep = comb.merged_df
-
-min_vol_usd = st.number_input("Min Volume USD", step=1250, value=5 * 10 ** 3)
-# max_spread = cols[1].number_input("Max Spread", step=0.1, value=0.5)
-max_spread = 0.5
-
-new_col_names = {
-    "base_symbol": "symbol_x",
-    "shortName": "shortName_x",
-    "open_BA": "open_x",
-    "bid_BA": "bid_x",
-    "ask_BA": "ask_x",
-    "open_D_BA": "open_y",
-    "bid_D_BA": "bid_y",
-    "ask_D_BA": "ask_y",
-    "volume_BA": "volume_x",
-    "volume_D_BA": "volume_y",
-    "MEP": "x/y mid",
-    "USD/ARS ask": "x/y ask",
-    "USD/ARS bid": "x/y bid"
-}
-
 df_mep = pd.read_csv("data/df_mep.csv")
 
-df_mep["vol_ARS"] = df_mep["volume_BA"] * df_mep["open_BA"]
-df_mep["vol_USD"] = df_mep["volume_D_BA"] * df_mep["open_D_BA"]
-df_mep["spread_ARS"] = ((df_mep["ask_BA"] - df_mep["bid_BA"]).abs() * 2 /
-                        (df_mep["ask_BA"] + df_mep["bid_BA"]))
-df_mep["spread_USD"] = ((df_mep["ask_D_BA"] - df_mep["bid_D_BA"]).abs() * 2 /
-                        (df_mep["ask_D_BA"] + df_mep["bid_D_BA"]))
-df_mep["max_spread"] = df_mep[['spread_ARS', 'spread_USD']].max(axis=1)
+min_vol_value_y_var = st.number_input("Min Volume USD", step=1250, value=5 * 10 ** 3)
 
-df_mep = df_mep[
-    (df_mep["vol_USD"] >= min_vol_usd)
-    & (df_mep["max_spread"] < max_spread)
-    ]
 
-# Remove outliers in terms of USD/ARS relationship
-for col_name in ["USD/ARS bid", "USD/ARS ask"]:
-    reference_value = df_mep[col_name].median()
-    df_mep = df_mep[
-        (df_mep["USD/ARS ask"] - reference_value).abs() / reference_value < 0.5]
+def outlier_removal(df, min_vol_value_y, max_spread=0.5):
+    # Outliers in terms of value
+    df = df[(df["vol_value_y"] >= min_vol_value_y) & (df["max_spread"] < max_spread)]
 
-column_config = {"bid_D_BA": st.column_config.NumberColumn("bid_D_BA", format="%.2f"),
-                 "ask_D_BA": st.column_config.NumberColumn("ask_D_BA", format="%.2f"),
-                 "USD/ARS ask": st.column_config.NumberColumn("USD/ARS ask", format="$ %.0f"),
-                 "USD/ARS bid": st.column_config.NumberColumn("USD/ARS bid", format="$ %.0f"),
-                 "vol_ARS": st.column_config.NumberColumn("vol_ARS", format="%.0e"),
-                 "vol_USD": st.column_config.NumberColumn("vol_USD", format="%.0e")
+    # Remove outliers in terms of x/y relationship
+    for c_n in ["x/y bid", "x/y ask"]:
+        reference_value = df[c_n].median()
+        df = df[(df[c_n] - reference_value).abs() / reference_value < 0.5]
+    return df
 
+
+df_mep = outlier_removal(df_mep, min_vol_value_y=min_vol_value_y_var)
+
+column_config = {"bid_y": st.column_config.NumberColumn("bid_y", format="%.2f"),
+                 "ask_y": st.column_config.NumberColumn("ask_y", format="%.2f"),
+                 "x/y ask": st.column_config.NumberColumn("x/y ask", format="$ %.0f"),
+                 "x/y bid": st.column_config.NumberColumn("x/y bid", format="$ %.0f"),
+                 "vol_value_x": st.column_config.NumberColumn("vol_value_x", format="%.0e"),
+                 "vol_value_y": st.column_config.NumberColumn("vol_value_y", format="%.0e")
                  }
 
-# CALCULATE CCL
-ccl_estimate = (df_mep["USD/ARS ask"].mean() + df_mep["USD/ARS bid"].mean()) / 2
-df_mep["volume_total"] = (df_mep["vol_ARS"] + df_mep["vol_USD"] * ccl_estimate)
 
-ccl_puntas = []
-for col_name in ["USD/ARS bid", "USD/ARS ask"]:
-    df_mep["aux"] = df_mep[col_name] * df_mep['volume_total']
-    ccl = df_mep["aux"].sum() / df_mep['volume_total'].sum()
-    ccl_puntas.append(ccl)
+def calculate_ccl(df):
+    # Calculate CCL
+    x_y_values = {}
+    for additional in ["bid", "mid", "ask"]:
+        col_name = "x/y " + additional
+        df_mep["aux"] = df_mep[col_name] * df_mep['vol_value_y']
+        ccl = df_mep["aux"].sum() / df_mep['vol_value_y'].sum()
+        x_y_values[additional] = ccl
 
-new_ccl = sum(ccl_puntas) / 2
-ccl_path = "data/dolar_ccl_historic.csv"
-ccl_data = pd.read_csv(ccl_path, index_col="Fecha")
-today_date = dt.date.today().strftime("%m/%d/%Y")
-ccl_data.loc[today_date, :] = new_ccl
-ccl_data.to_csv(ccl_path)
+    # Export to csv
+    ccl_path = "data/dolar_ccl_historic.csv"
+    ccl_data = pd.read_csv(ccl_path, index_col="Fecha")
+    today_date = dt.date.today().strftime("%m/%d/%Y")
+    ccl_data.loc[today_date, :] = x_y_values["mid"]
+    ccl_data.to_csv(ccl_path)
+
+    return x_y_values
+
+
+x_y_values = calculate_ccl(df_mep)
 
 cols = st.columns(3)
-cols[0].metric(label="CCL Avg Compra", value="$ {:.1f}".format(round(ccl_puntas[0], 1)))
-cols[1].metric(label="CCL Avg", value="$ {:.1f}".format(round(new_ccl, 1)))
-cols[2].metric(label="CCL Avg Venta", value="$ {:.1f}".format(round(ccl_puntas[1], 1)))
+cols[0].metric(label="CCL Avg Compra", value="$ {:.1f}".format(round(x_y_values["bid"], 1)))
+cols[1].metric(label="CCL Avg", value="$ {:.1f}".format(round(x_y_values["mid"], 1)))
+cols[2].metric(label="CCL Avg Venta", value="$ {:.1f}".format(round(x_y_values["ask"], 1)))
 
-st.dataframe(df_mep[["base_symbol", "shortName", "bid_BA", "ask_BA", "bid_D_BA", "ask_D_BA",
-                     "vol_ARS", "vol_USD", "USD/ARS bid", "USD/ARS ask"]]
-             , hide_index=True, column_config=column_config, width=5000)
+st.dataframe(df_mep[["base_symbol_x", "shortName_x", "bid_x", "ask_x", "bid_y", "ask_y",
+                     "vol_value_x", "vol_value_y", "x/y bid", "x/y ask"]],
+             hide_index=True, column_config=column_config, width=5000)
 
 st.markdown("## WINNERS")
-max_col1_row = df_mep[df_mep['USD/ARS bid'] == df_mep['USD/ARS bid'].max()]
-min_col2_row = df_mep[df_mep['USD/ARS ask'] == df_mep['USD/ARS ask'].min()]
-max_col1_row['Obj'] = 'Buy USD'
-min_col2_row['Obj'] = 'Buy ARS'
 
-best_assets = pd.concat([max_col1_row, min_col2_row])
-st.dataframe(best_assets[["base_symbol", "shortName", "bid_BA", "ask_BA", "bid_D_BA", "ask_D_BA",
-                          "USD/ARS bid", "USD/ARS ask", 'Obj']]
-             , hide_index=True, column_config=column_config, width=5000)
+if not df_mep.empty:
+    max_col1_row = df_mep[df_mep['x/y bid'] == df_mep['x/y bid'].max()]
+    min_col2_row = df_mep[df_mep['x/y ask'] == df_mep['x/y ask'].min()]
+    max_col1_row['Obj'] = 'Buy USD'
+    min_col2_row['Obj'] = 'Buy ARS'
 
-usd_entry_point = max_col1_row['USD/ARS bid'].iloc[0]
-ars_entry_point = min_col2_row['USD/ARS ask'].iloc[0]
+    best_assets = pd.concat([max_col1_row, min_col2_row])
+    st.dataframe(best_assets[["base_symbol_x", "shortName_x", "bid_x", "ask_x", "bid_y", "ask_y",
+                              "x/y bid", "x/y ask", 'Obj']],
+                 hide_index=True, column_config=column_config, width=5000)
 
-expected_profit = usd_entry_point / ars_entry_point - 1
+    usd_entry_point = max_col1_row['x/y bid'].iloc[0]
+    ars_entry_point = min_col2_row['x/y ask'].iloc[0]
 
-cols = st.columns(2)
-with cols[0]:
-    st.metric(label="usd_entry_point", value="$ {:.1f}".format(round(usd_entry_point, 1)))
-    st.write(f"Buy {max_col1_row['base_symbol'].iloc[0]}D at {max_col1_row['ask_D_BA'].iloc[0]} USD")
-    st.write(f"Sell {max_col1_row['base_symbol'].iloc[0]} at {max_col1_row['bid_BA'].iloc[0]} ARS")
-with cols[1]:
-    st.metric(label="ars_entry_point", value="$ {:.1f}".format(round(ars_entry_point, 1)))
-    st.write(f"Buy {min_col2_row['base_symbol'].iloc[0]} at {min_col2_row['ask_BA'].iloc[0]} ARS")
-    st.write(f"Sell {min_col2_row['base_symbol'].iloc[0]}D at {min_col2_row['bid_D_BA'].iloc[0]} USD")
+    expected_profit = usd_entry_point / ars_entry_point - 1
 
-st.metric(label="expected_profit", value="{:.1f} %".format(round(expected_profit * 100, 1)))
+    cols = st.columns(2)
+    with cols[0]:
+        st.metric(label="usd_entry_point", value="$ {:.1f}".format(round(usd_entry_point, 1)))
+        st.write(f"Buy {max_col1_row['base_symbol_x'].iloc[0]}D at {max_col1_row['ask_y'].iloc[0]} USD")
+        st.write(f"Sell {max_col1_row['base_symbol_x'].iloc[0]} at {max_col1_row['bid_x'].iloc[0]} ARS")
+    with cols[1]:
+        st.metric(label="ars_entry_point", value="$ {:.1f}".format(round(ars_entry_point, 1)))
+        st.write(f"Buy {min_col2_row['base_symbol_x'].iloc[0]} at {min_col2_row['ask_x'].iloc[0]} ARS")
+        st.write(f"Sell {min_col2_row['base_symbol_x'].iloc[0]}D at {min_col2_row['bid_y'].iloc[0]} USD")
+
+    st.metric(label="expected_profit", value="{:.1f} %".format(round(expected_profit * 100, 1)))
+else:
+    st.markdown("### Not enough data")
