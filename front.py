@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from utils.mep_calculator import MepCalculator
 import datetime as dt
+from pathlib import Path
 
 st.set_page_config(layout="wide")
 
@@ -14,7 +15,9 @@ if data_source == "IOL":
 if st.button("Refresh/Pull Data"):
     comb = MepCalculator(selected_data_extractor_name=data_source, asset_type="cedear")
     comb.run()
-df_mep = pd.read_csv("data/df_mep.csv")
+
+source_data_path = Path(__file__).parent.joinpath("data", "df_mep.csv")
+df_mep = pd.read_csv(source_data_path)
 
 min_vol_value_y_var = st.number_input("Min Volume USD", step=1250, value=5 * 10 ** 3)
 
@@ -51,7 +54,7 @@ def calculate_ccl(df):
         x_y_values[additional] = ccl
 
     # Export to csv
-    ccl_path = "data/dolar_ccl_historic.csv"
+    ccl_path = Path(__file__).parent.joinpath("data", "dolar_ccl_historic.csv")
     ccl_data = pd.read_csv(ccl_path, index_col="Fecha")
     today_date = dt.date.today().strftime("%m/%d/%Y")
     ccl_data.loc[today_date, :] = x_y_values["mid"]
