@@ -4,6 +4,7 @@ from pathlib import Path
 from yahoo.extract_data import YahooDataExtractor
 import plotly.express as px
 
+st.set_page_config(layout="wide")
 
 source_data_path = Path(__file__).parent.joinpath("data", "df_mep.csv")
 df_mep = pd.read_csv(source_data_path)
