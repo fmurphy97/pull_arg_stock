@@ -2,7 +2,7 @@ import yfinance as yf
 import pandas as pd
 import streamlit as st
 import plotly.graph_objects as go
-
+from pathlib import Path
 
 def get_stock_info(symbol: str):
     stock_data = pd.read_csv("data/cedear_ratios.csv", index_col="symbol").loc[symbol, :]
@@ -91,14 +91,22 @@ def candle_plot(dfs_by_symbol):
     return fig
 
 
-symbol_usa = st.text_input("Select a symbol", value="SPY").upper()
+ratios_data_path = Path(__file__).parent.joinpath("data", "cedear_ratios_reloaded.xlsx")
+cedear_ratios = pd.read_excel(ratios_data_path, sheet_name="cedear_names")
+cedear_ratios["base_symbol_name"] = cedear_ratios["base_symbol"] + " (" + cedear_ratios["short_name"] + ")"
+index_of_spy = int(cedear_ratios[cedear_ratios['base_symbol'] == 'SPY'].index[0])
+symbol_usa_with_name = st.selectbox(label="Select a symbol",
+                                    options=cedear_ratios["base_symbol_name"], index=index_of_spy)
+st.write(symbol_usa_with_name)
+symbol_usa = cedear_ratios[cedear_ratios['base_symbol_name'] == symbol_usa_with_name]["base_symbol"].iloc[0].upper()
+
 
 possible_periods = [
-    # "1m", "2m", "5m", "15m", "30m", "60m", "90m",
-    "1h", "1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"]
+    # "1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h",
+    "1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"]
 
 selected_period = st.radio("Select an Period", possible_periods[possible_periods.index("1d"):], horizontal=True)
-selected_interval = st.radio("Select an Interval", possible_periods[:possible_periods.index(selected_period)],
+selected_interval = st.radio("Select an Interval", possible_periods[:possible_periods.index(selected_period)+1],
                              horizontal=True)
 
 use_local_ars_data = st.checkbox("Use local ARS", value=False)
