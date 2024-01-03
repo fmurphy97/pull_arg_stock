@@ -62,6 +62,11 @@ class MepCalculator:
         export_path = Path(__file__).parent.parent.joinpath("data", "df_mep.csv")
         self.merged_df.to_csv(export_path, index=False)
 
+    def join_with_names(self):
+        file_path = Path(__file__).parent.parent.joinpath("data", "cedear_ratios_reloaded.xlsx")
+        df_names = pd.read_excel(file_path, sheet_name=f"{self.asset_type}_names")
+        self.merged_df = self.merged_df.merge(df_names, left_on="base_symbol_x", right_on="base_symbol", how="left")
+
     def outlier_removal(self):
         """Removes any outliers"""
         pass
@@ -71,10 +76,11 @@ class MepCalculator:
         pass
 
     def run(self, export_results=True):
+
         self.join_with_asset_data()
         self.cross_join_df()
         self.calculate_mep()
-
+        self.join_with_names()
         if export_results:
             self.export_to_csv()
 

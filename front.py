@@ -70,7 +70,7 @@ cols[0].metric(label="CCL Avg Compra", value="$ {:.1f}".format(round(x_y_values[
 cols[1].metric(label="CCL Avg", value="$ {:.1f}".format(round(x_y_values["mid"], 1)))
 cols[2].metric(label="CCL Avg Venta", value="$ {:.1f}".format(round(x_y_values["ask"], 1)))
 
-st.dataframe(df_mep[["base_symbol_x", "shortName_x", "bid_x", "ask_x", "bid_y", "ask_y",
+st.dataframe(df_mep[["base_symbol_x", "short_name", "bid_x", "ask_x", "bid_y", "ask_y",
                      "vol_value_x", "vol_value_y", "x/y bid", "x/y ask"]],
              hide_index=True, column_config=column_config, width=5000)
 
@@ -83,7 +83,7 @@ if not df_mep.empty:
     min_col2_row['Obj'] = 'Buy ARS'
 
     best_assets = pd.concat([max_col1_row, min_col2_row])
-    st.dataframe(best_assets[["base_symbol_x", "shortName_x", "bid_x", "ask_x", "bid_y", "ask_y",
+    st.dataframe(best_assets[["base_symbol_x", "short_name", "bid_x", "ask_x", "bid_y", "ask_y",
                               "x/y bid", "x/y ask", 'Obj']],
                  hide_index=True, column_config=column_config, width=5000)
 
