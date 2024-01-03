@@ -4,6 +4,7 @@ import streamlit as st
 import plotly.graph_objects as go
 from pathlib import Path
 
+
 def get_stock_info(symbol: str):
     stock_data = pd.read_csv("data/cedear_ratios.csv", index_col="symbol").loc[symbol, :]
     stock_data["base_symbol"] = symbol
@@ -100,13 +101,12 @@ symbol_usa_with_name = st.selectbox(label="Select a symbol",
 st.write(symbol_usa_with_name)
 symbol_usa = cedear_ratios[cedear_ratios['base_symbol_name'] == symbol_usa_with_name]["base_symbol"].iloc[0].upper()
 
-
 possible_periods = [
     # "1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h",
     "1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"]
 
 selected_period = st.radio("Select an Period", possible_periods[possible_periods.index("1d"):], horizontal=True)
-selected_interval = st.radio("Select an Interval", possible_periods[:possible_periods.index(selected_period)+1],
+selected_interval = st.radio("Select an Interval", possible_periods[:possible_periods.index(selected_period) + 1],
                              horizontal=True)
 
 use_local_ars_data = st.checkbox("Use local ARS", value=False)
