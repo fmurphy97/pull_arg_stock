@@ -1,0 +1,1 @@
+streamlit run ver_brecha_usa_st.py

@@ -98,20 +98,21 @@ cedear_ratios["base_symbol_name"] = cedear_ratios["base_symbol"] + " (" + cedear
 index_of_spy = int(cedear_ratios[cedear_ratios['base_symbol'] == 'SPY'].index[0])
 symbol_usa_with_name = st.selectbox(label="Select a symbol",
                                     options=cedear_ratios["base_symbol_name"], index=index_of_spy)
-st.write(symbol_usa_with_name)
 symbol_usa = cedear_ratios[cedear_ratios['base_symbol_name'] == symbol_usa_with_name]["base_symbol"].iloc[0].upper()
 
 possible_periods = [
     # "1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h",
     "1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"]
 
-selected_period = st.radio("Select an Period", possible_periods[possible_periods.index("1d"):], horizontal=True)
-selected_interval = st.radio("Select an Interval", possible_periods[:possible_periods.index(selected_period) + 1],
+selected_period = st.radio("Period", possible_periods[possible_periods.index("5d"):], horizontal=True)
+selected_interval = st.radio("Interval", possible_periods[:possible_periods.index(selected_period)],
                              horizontal=True)
 
-use_local_ars_data = st.checkbox("Use local ARS", value=False)
-use_ext_usd_data = st.checkbox("Use Foreign USD", value=True)
-use_local_usd_data = st.checkbox("Use local USD", value=True)
+st.write("Data Series")
+cols = st.columns(3)
+use_local_ars_data = cols[0].checkbox("Local ARS", value=False)
+use_ext_usd_data = cols[1].checkbox("Foreign USD", value=True)
+use_local_usd_data = cols[2].checkbox("Local USD", value=True)
 
 if st.button("RUN"):
     symbol_data = get_stock_info(symbol_usa)
